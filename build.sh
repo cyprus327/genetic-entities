@@ -1,0 +1,1 @@
+gcc main.c -o program -O3 -lm -lraylib
