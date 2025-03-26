@@ -66,7 +66,7 @@ typedef i32 vec2i[2];
     (v)[0] = _x + (p)[0]; (v)[1] = _y + (p)[1]; \
 }
 
-#define FRAMES_MAX 256
+#define FRAMES_MAX 128
 #define ENTITY_MAX 1000
 #define OBSTACLE_MAX 3
 
@@ -98,7 +98,7 @@ typedef struct obstacle {
 
 typedef struct state {
     i32 gen, currFrame;
-    i32 slowMode;
+    i32 fastMode;
     
     Entity* entities;
     Entity* nextEntities;

@@ -1,0 +1,1 @@
+emcc -o index.html main.c -Os -std=c99 -I../../Clone/raylib/src -L../../Clone/raylib/src -lraylib -s USE_GLFW=3 -s ASYNCIFY

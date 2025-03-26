@@ -8,50 +8,41 @@
 
 #define RL_VEC(v) ((Vector2){(v)[0], (v)[1]})
 
-i32 windowWidth = 1280, windowHeight = 720;
+i32 windowWidth = 800, windowHeight = 600;
 
 f32 mutationChance = DEFAULT_MUTATION_CHANCE;
 f32 mutationMagnitude = DEFAULT_MUTATION_MAGNITUDE;
 f32 popMagnitude = DEFAULT_POP_MAGNITUDE;
 
 i32 main(void) {
-    // SetConfigFlags(FLAG_WINDOW_RESIZABLE);
-    SetTargetFPS(1000);
-    InitWindow(windowWidth, windowHeight, "Window");
+    SetTargetFPS(60);
+    InitWindow(windowWidth, windowHeight, "Genetic Entities");
 
     GuiSetStyle(DEFAULT, BASE_COLOR_NORMAL, 0x10101060);
 
-    State state = { .entitySpawnPos = {100, windowHeight / 2.f}, .entityTargetPos = {windowWidth - 100, windowHeight / 2.f} };
-    state.slowMode = 0;
+    State state = { 
+        .entitySpawnPos = {100, windowHeight / 2.f}, 
+        .entityTargetPos = {windowWidth - 100, windowHeight / 2.f},
+        .fastMode = 0
+    };
     state_init(&state);
 
+    // TODO moving obstacles and end pos with mouse
     state.obstacles[0] = (Obstacle){
-        {320, 200}, {370, windowHeight - 200} };
+        {320, 100}, {370, windowHeight - 100} };
     state.obstacles[1] = (Obstacle){
-        {700, -1000}, {800, windowHeight / 2.f - 100} };
+        {500, -1000}, {550, windowHeight / 2.f - 70} };
     state.obstacles[2] = (Obstacle){
-        {700, windowHeight / 2.f + 100}, {800, windowHeight + 1000} };
+        {500, windowHeight / 2.f + 70}, {550, windowHeight + 1000} };
 
     while (!WindowShouldClose()) {
         windowWidth = GetScreenWidth();
         windowHeight = GetScreenHeight();
 
-        const f32 dt = GetFrameTime();
-        state_update(&state, 0.8f);
-
-        if (IsKeyPressed(KEY_SPACE)) {
-            state.slowMode = !state.slowMode;
-            if (state.slowMode) {
-                SetTargetFPS(60);
-            } else {
-                SetTargetFPS(1000);
-            }
-        }
-
-        state.entitySpawnPos[1] = windowHeight / 2.f;
-        state.entityTargetPos[0] = windowWidth - 100.f;
-        if (IsKeyPressed(KEY_R)) {
-            state.entityTargetPos[1] = GetMousePosition().y;
+        // 1 gen per frame or 1 frame per frame
+        const i32 n = state.fastMode ? FRAMES_MAX : 1;
+        for (i32 i = 0; i < n; i += 1) {
+            state_update(&state, 0.8f);
         }
 
         BeginDrawing(); {
@@ -90,7 +81,7 @@ i32 main(void) {
                 vec2 bottomRight = { p[0] + width / 2.f, p[1] + height / 2.f };
 
                 // rotation based on velocity
-                const f32 rot = atan2f(v[1], v[0]) + M_PI / 2.f;
+                const f32 rot = atan2f(v[1], v[0]) + 3.14159f / 2.f;
                 VEC_ROTATE(top, p, rot);
                 VEC_ROTATE(bottomLeft, p, rot);
                 VEC_ROTATE(bottomRight, p, rot);
@@ -122,7 +113,10 @@ i32 main(void) {
                 state_init(&state);
             }
 
-            x -= 130;
+            x += 130;
+            GuiToggle((Rectangle){x, y, 80, 20}, "Fast Mode", (_Bool*)(&state.fastMode));
+
+            x = 20;
             y += 30;
             DrawText(TextFormat("%.3f | Mutation Chance", mutationChance), x, y, 14, GRAY);
             GuiSlider((Rectangle){x, y + 20, 150, 20}, "", "", &mutationChance, 0.f, 1.f);
@@ -184,14 +178,9 @@ void state_release(State* state) {
 
 void state_new_generation(State* state) {
     // update fitness
-    f32 totalFitness = 0.f;
     for (i32 i = 0; i < ENTITY_MAX; i += 1) {
         f32 fitness = entity_calc_fitness(&state->entities[i], state->entityTargetPos);
         state->entities[i].fitness = fitness;
-        totalFitness += fitness;
-    }
-    for (i32 i = 0; i < ENTITY_MAX; i += 1) {
-        state->entities[i].fitness /= totalFitness;
     }
 
     // pop some for variation
@@ -204,9 +193,9 @@ void state_new_generation(State* state) {
     // create new population
     for (i32 i = popCount; i < ENTITY_MAX; i += 1) {
         // tournament selection instead of gene pool
-        const i32 parent1 = entity_tournament_select(state, 5);
-        const i32 parent2 = entity_tournament_select(state, 5);
-        
+        const i32 parent1 = entity_tournament_select(state, 7);
+        const i32 parent2 = entity_tournament_select(state, 7);
+
         entity_crossover_genes(
             &state->nextEntities[i],
             &state->entities[parent1],
