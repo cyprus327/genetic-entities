@@ -66,31 +66,35 @@ typedef i32 vec2i[2];
     (v)[0] = _x + (p)[0]; (v)[1] = _y + (p)[1]; \
 }
 
-#define FRAMES_MAX 128
-#define ENTITY_MAX 1000
+#define FRAMES_MAX 256
+#define ENTITIES_MAX 1024
 #define OBSTACLE_MAX 3
 
 #define ENTITY_SIZE 15.f
 #define TARGET_RAD 20.f
 
 #define DEFAULT_MUTATION_CHANCE 0.2f
-#define DEFAULT_MUTATION_MAGNITUDE 0.15f
-#define DEFAULT_POP_MAGNITUDE 0.1f
+#define DEFAULT_MUTATION_MAGNITUDE 0.1f
+#define DEFAULT_POP_MAGNITUDE 0.05f
 
-typedef struct entity {
-    vec2 pos, vel;
+typedef struct entities {
+    f32 posX[ENTITIES_MAX];
+    f32 posY[ENTITIES_MAX];
+    f32 velX[ENTITIES_MAX];
+    f32 velY[ENTITIES_MAX];
 
     enum stateType {
         STATE_ALIVE,
         STATE_FAILED,
-        STATE_COMPLETED,
-    } state;
+        STATE_COMPLETED
+    } state[ENTITIES_MAX];
 
-    f32 fitness;
-    i32 framesToFinish;
+    f32 fitness[ENTITIES_MAX];
+    i32 framesToFinish[ENTITIES_MAX];
 
-    vec2* genes;
-} Entity;
+    f32 genesX[FRAMES_MAX][ENTITIES_MAX];
+    f32 genesY[FRAMES_MAX][ENTITIES_MAX];
+} Entities;
 
 typedef struct obstacle {
     vec2 min, max;
@@ -100,8 +104,8 @@ typedef struct state {
     i32 gen, currFrame;
     i32 fastMode;
     
-    Entity* entities;
-    Entity* nextEntities;
+    Entities* entities;
+    Entities* nextEntities;
     vec2 entitySpawnPos, entityTargetPos;
 
     Obstacle obstacles[OBSTACLE_MAX];
@@ -113,13 +117,8 @@ void state_init(State* state);
 void state_release(State* state);
 void state_new_generation(State* state);
 void state_end_generation(State* state);
-void state_update(State* state, f32 delta);
+void state_update(State* state);
+void state_reset_entity(State* state, i32 i);
+void state_reset_next_entity(State* state, i32 i);
 
-void entity_init(Entity* entity, const vec2 spawnPos);
-void entity_release(Entity* entity);
-void entity_reset(Entity* entity, const vec2 spawnPos);
-void entity_update(Entity* entity, const State* state, f32 delta);
-f32 entity_calc_fitness(const Entity* entity, const vec2 targetPos);
-void entity_crossover_genes(Entity* child, Entity* first, Entity* second, const State* state);
-void entity_mutate_genes(Entity* entity);
-i32 entity_tournament_select(const State* state, i32 size);
+i32 entities_tournament_select(const Entities* entities, i32 size);
