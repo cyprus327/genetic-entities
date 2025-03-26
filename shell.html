@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Genetic Entities</title>
+    <style>
+        body { margin: 0; overflow: hidden; text-align: center; background: black; }
+        canvas { display: block; margin: auto; }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+
+    <script>
+        var Module = {
+            canvas: document.getElementById('canvas'),
+            onRuntimeInitialized: function() {
+                console.log("Raylib WASM loaded");
+            }
+        };
+    </script>
+
+    {{{ SCRIPT }}}
+    
+</body>
+</html>
